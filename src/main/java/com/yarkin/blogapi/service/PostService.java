@@ -11,7 +11,17 @@ public interface PostService {
     Post add(Post newPost);
 
     // Updates by obtained id and received post
-    void update(long postId, Post post);
+    Post update(long postId, Post post);
 
-    void delete(long postId);
+    Post delete(long postId);
+
+    List<Post> findByTitle(String postTitle);
+
+    List<Post> getAllSortedByTitle();
+
+    List<Post> getAllTopPosts();
+
+    Post markAsTop(long postId);
+
+    Post removeFromTop(long postId);
 }
