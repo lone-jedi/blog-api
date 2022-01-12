@@ -7,6 +7,8 @@ import java.util.List;
 public interface PostService {
     List<Post> getAll();
 
+    Post getById(long postId);
+
     // Returns added post
     Post add(Post newPost);
 
