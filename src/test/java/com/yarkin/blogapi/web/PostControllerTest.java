@@ -1,13 +1,13 @@
 package com.yarkin.blogapi.web;
 
-import java.io.UnsupportedEncodingException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.yarkin.blogapi.entity.Comment;
 import com.yarkin.blogapi.entity.Post;
+import com.yarkin.blogapi.service.CommentService;
 import com.yarkin.blogapi.service.PostService;
 import com.yarkin.blogapi.web.post.DefaultPostController;
-import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -31,6 +31,9 @@ public class PostControllerTest {
 
     @MockBean
     private PostService postService;
+
+    @MockBean
+    private CommentService commentService;
 
     private List<Post> postsDb = List.of(
         new Post(1, "Test", "Testing api...", LocalDateTime.of(
@@ -368,5 +371,51 @@ public class PostControllerTest {
         assertEquals(HttpStatus.OK.value(), response.getStatus());
 
         JSONAssert.assertEquals(expected, response.getContentAsString(), false);
+    }
+
+    // ??? - is it right way to call 2 service from controller
+    @Test
+    public void getPostWithComments() throws Exception {
+        List<Comment> postComments = List.of(
+                new Comment(1, "Nice!",  LocalDateTime.of(
+                        2020, 10, 21, 22, 0, 22, 32), 1),
+                new Comment(2, "Cool!",  LocalDateTime.of(
+                        2020, 10, 21, 22, 0, 22, 32), 1));
+
+
+        String expectedJson = """
+                {
+                        id:1,
+                        title:"Test",
+                        content:"Testing api...",
+                        creationDate:"2020-10-21T22:00:22.000000032",
+                        star:false,
+                        comments: [
+                            {
+                                id:1,
+                                text:"Nice!",
+                                creationDate:"2020-10-21T22:00:22.000000032",
+                                postId:1
+                            },
+                            {
+                                id:2,
+                                text:"Cool!",
+                                creationDate:"2020-10-21T22:00:22.000000032",
+                                postId:1
+                            }
+                        ]
+                }""";
+        
+        Mockito.when(postService.getById(1)).thenReturn(postsDb.get(0));
+        Mockito.when(commentService.getAllByPostId(1)).thenReturn(postComments);
+
+        RequestBuilder requestBuilder = MockMvcRequestBuilders.get("/api/v1/posts/1/full")
+                .accept(MediaType.APPLICATION_JSON);
+
+        MockHttpServletResponse response = mockMvc.perform(requestBuilder).andReturn().getResponse();
+
+        assertEquals(HttpStatus.OK.value(), response.getStatus());
+
+        JSONAssert.assertEquals(expectedJson, response.getContentAsString(), false);
     }
 }
